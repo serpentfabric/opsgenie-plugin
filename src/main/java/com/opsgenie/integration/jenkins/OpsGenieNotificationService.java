@@ -5,7 +5,14 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.Result;
+import hudson.model.User;
+import hudson.scm.ChangeLogSet;
+import hudson.tasks.test.AbstractTestResultAction;
+import hudson.tasks.test.TestResult;
+import jenkins.model.JenkinsLocationConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -18,22 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.model.Result;
-import hudson.model.User;
-import hudson.scm.ChangeLogSet;
-import hudson.tasks.test.AbstractTestResultAction;
-import hudson.tasks.test.TestResult;
-import jenkins.model.JenkinsLocationConfiguration;
+import java.util.*;
 
 /**
  * @author Omer Ozkan
@@ -70,12 +62,12 @@ public class OpsGenieNotificationService {
     private boolean checkResponse(String res) {
         try {
             ResponseFromOpsGenie response = mapper.readValue(res, ResponseFromOpsGenie.class);
-            if (response.status.equals("successful")) {
+            if (StringUtils.isEmpty(response.error)) {
                 consoleOutputLogger.println("Sending job data to OpsGenie is done");
                 return true;
             } else {
-                consoleOutputLogger.println(String.format("Response status is : %s , failed", response.status));
-                logger.error(String.format("Response status is : %s , failed", response.status));
+                consoleOutputLogger.println("Response status is failed");
+                logger.error("Response status is failed");
                 return false;
             }
         } catch (Exception e) {
@@ -301,15 +293,15 @@ public class OpsGenieNotificationService {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ResponseFromOpsGenie {
 
-        @JsonProperty("status")
-        private String status;
+        @JsonProperty("error")
+        private String error;
 
-        public String getStatus() {
-            return status;
+        public String getError() {
+            return error;
         }
 
-        public void setStatus(String status) {
-            this.status = status;
+        public void setError(String error) {
+            this.error = error;
         }
     }
 }
