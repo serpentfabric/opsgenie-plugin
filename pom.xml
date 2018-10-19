@@ -40,6 +40,16 @@
             <name>Kagan Yildiz</name>
             <email>kagan@opsgenie.com</email>
         </developer>
+        <developer>
+            <id>cglrkn</id>
+            <name>Cagla Arikan</name>
+            <email>cagla.arikan@gmail.com</email>
+        </developer>
+        <developer>
+            <id>cemkucuk</id>
+            <name>Cem Kucuk</name>
+            <email>cem@opsgenie.com</email>
+        </developer>
     </developers>
     <scm>
         <connection>scm:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
