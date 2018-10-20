@@ -1,13 +1,13 @@
 package com.opsgenie.integration.jenkins;
 
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
 import hudson.model.Result;
+import hudson.model.Run;
+import hudson.model.Job;
 import hudson.model.User;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.test.AbstractTestResultAction;
@@ -38,8 +38,8 @@ public class OpsGenieNotificationService {
 
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(OpsGenieNotificationService.class);
 
-    private AbstractBuild build;
-    private AbstractProject project;
+    private Run<?, ?> build;
+    private Job<?, ?> project;
     private AlertProperties alertProperties;
     private PrintStream consoleOutputLogger;
     private Map<String, Object> requestPayload;
@@ -48,7 +48,7 @@ public class OpsGenieNotificationService {
 
     public OpsGenieNotificationService(OpsGenieNotificationRequest request) {
         build = request.getBuild();
-        project = build.getProject();
+        project = build.getParent();
 
         this.request = request;
         mapper = new ObjectMapper();
@@ -170,25 +170,29 @@ public class OpsGenieNotificationService {
 
     private String formatBuildVariables() {
         StringBuilder buildVariablesBuilder = new StringBuilder();
-        Map<String, String> buildVariables = build.getBuildVariables();
-        for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-            buildVariablesBuilder.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("\n");
+        if (build instanceof AbstractBuild) {
+            Map<String, String> buildVariables = ((AbstractBuild<?, ?>) build).getBuildVariables();
+            for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
+                buildVariablesBuilder.append(entry.getKey()).append(" -> ").append(entry.getValue()).append("\n");
+            }
         }
         return buildVariablesBuilder.toString();
     }
 
-    protected boolean sendAfterBuildData() {
+    public boolean sendAfterBuildData() {
         populateRequestPayloadWithMandatoryFields();
 
-        if (build.getResult() == Result.FAILURE || build.getResult() == Result.UNSTABLE) {
-            Set<User> culprits = build.getCulprits();
-            if (!culprits.isEmpty()) {
-                requestPayload.put("culprits", formatCulprits(culprits));
+        if (build instanceof AbstractBuild) {
+            if (build.getResult() == Result.FAILURE || build.getResult() == Result.UNSTABLE) {
+                Set<User> culprits = ((AbstractBuild<?, ?>) build).getCulprits();
+                if (!culprits.isEmpty()) {
+                    requestPayload.put("culprits", formatCulprits(culprits));
+                }
             }
         }
 
         StringBuilder descriptionBuilder = new StringBuilder();
-        AbstractTestResultAction testResult = build.getAction(AbstractTestResultAction.class);
+        AbstractTestResultAction<?> testResult = build.getAction(AbstractTestResultAction.class);
         if (testResult != null) {
             String passedTestCount = Integer.toString(testResult.getTotalCount() - testResult.getFailCount() - testResult.getSkipCount());
             requestPayload.put("passedTestCount", passedTestCount);
@@ -203,19 +207,21 @@ public class OpsGenieNotificationService {
             }
         }
 
-        requestPayload.put("commitList", formatCommitList(build.getChangeSet()));
-        AbstractBuild previousBuild = build.getPreviousBuild();
+        if (build instanceof AbstractBuild) {
+            requestPayload.put("commitList", formatCommitList(((AbstractBuild<?, ?>) build).getChangeSet()));
+        }
+        Run<?, ?> previousBuild = build.getPreviousBuild();
         if (previousBuild != null) {
             String previousDisplayName = previousBuild.getDisplayName();
             requestPayload.put("previousDisplayName", previousDisplayName);
             String previousTime = previousBuild.getTimestamp().getTime().toString();
             requestPayload.put("previousTime", previousTime);
             Result previousResult = previousBuild.getResult();
-            if(previousResult != null){
+            if (previousResult != null) {
                 requestPayload.put("previousStatus", previousResult.toString());
             }
-            AbstractProject previousProject = previousBuild.getProject();
-            if(previousProject != null){
+            Job<?, ?> previousProject = previousBuild.getParent();
+            if (previousProject != null) {
                 String previousProjectName = previousProject.getName();
                 requestPayload.put("previousProjectName", previousProjectName);
             }
@@ -260,8 +266,12 @@ public class OpsGenieNotificationService {
         String displayName = build.getDisplayName();
         requestPayload.put("displayName", displayName);
 
-        String status = Objects.toString(build.getResult());
-        requestPayload.put("status", status);
+        Result status = build.getResult();
+        if (status == null) {
+            // Build may still be ongoing
+            status = Result.SUCCESS;
+        }
+        requestPayload.put("status", Objects.toString(status));
 
         String url = build.getUrl();
         requestPayload.put("url", new JenkinsLocationConfiguration().getUrl() + url);
