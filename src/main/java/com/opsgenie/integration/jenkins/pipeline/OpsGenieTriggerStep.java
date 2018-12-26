@@ -1,14 +1,12 @@
 package com.opsgenie.integration.jenkins.pipeline;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
-
-import com.opsgenie.integration.jenkins.AlertPriority;
-import com.opsgenie.integration.jenkins.AlertProperties;
-import com.opsgenie.integration.jenkins.OpsGenieNotificationRequest;
-import com.opsgenie.integration.jenkins.OpsGenieNotificationService;
-import com.opsgenie.integration.jenkins.OpsGenieNotifier;
-
+import com.opsgenie.integration.jenkins.*;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.model.Run;
+import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousNonBlockingStepExecution;
@@ -16,12 +14,8 @@ import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.Run;
-import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 public class OpsGenieTriggerStep extends AbstractStepImpl {
 
@@ -61,6 +55,24 @@ public class OpsGenieTriggerStep extends AbstractStepImpl {
     @DataBoundSetter
     public void setTeams(String teams) {
         this.teams = teams;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    @DataBoundSetter
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
+    }
+
+    public String getApiUrl() {
+        return apiUrl;
+    }
+
+    @DataBoundSetter
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
     }
 
     public String getTags() {
