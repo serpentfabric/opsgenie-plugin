@@ -1,7 +1,7 @@
 package com.opsgenie.integration.jenkins;
 
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 
 /**
  * @author Omer Ozkan
@@ -14,8 +14,8 @@ public class OpsGenieNotificationRequest {
     private String apiKey;
     private String apiUrl;
     private AlertProperties alertProperties;
-    private AbstractBuild build;
-    private BuildListener listener;
+    private Run<?, ?> build;
+    private TaskListener listener;
 
     public String getApiKey() {
         return apiKey;
@@ -44,20 +44,20 @@ public class OpsGenieNotificationRequest {
         return this;
     }
 
-    public AbstractBuild getBuild() {
+    public Run<?, ?> getBuild() {
         return build;
     }
 
-    public OpsGenieNotificationRequest setBuild(AbstractBuild build) {
+    public OpsGenieNotificationRequest setBuild(Run<?, ?> build) {
         this.build = build;
         return this;
     }
 
-    public BuildListener getListener() {
+    public TaskListener getListener() {
         return listener;
     }
 
-    public OpsGenieNotificationRequest setListener(BuildListener listener) {
+    public OpsGenieNotificationRequest setListener(TaskListener listener) {
         this.listener = listener;
         return this;
     }
