@@ -274,7 +274,7 @@ public class OpsGenieNotificationService {
         requestPayload.put("status", Objects.toString(status));
 
         String url = build.getUrl();
-        requestPayload.put("url", new JenkinsLocationConfiguration().getUrl() + url);
+        requestPayload.put("url", JenkinsLocationConfiguration.get().getUrl() + url);
 
         List<String> tags = splitStringWithComma(alertProperties.getTags());
         requestPayload.put("tags", tags);
